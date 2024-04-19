@@ -11,10 +11,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 app.use("/expense", expenseRoute);
-app.use('/user', userRoute);
-
+app.use("/user", userRoute);
 
 sequelize
+  //.sync({force : true})
   .sync()
   .then(() => {
     app.listen(3000, () => {
