@@ -1,50 +1,51 @@
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 
 exports.signUp = async (req, res) => {
   try {
-    const name = req.body.name;
-    const email = req.body.email;
-    const password = req.body.password;
-    const saltRounds = 10;
-    const hash = await bcrypt.hash(password, saltRounds);
+    const { name, email, password } = req.body;
 
-    // Check if a user with the provided email already exists
-    const existingUser = await User.findOne({
-      where: { email: email },
-    });
+    const existingUser = await User.findOne({ where: { email } });
 
-    // If user already exists, return an error
     if (existingUser) {
       return res.status(400).json({ error: "Email already in use" });
     }
 
-    //if user don't exists then create an new user
-    const result = await User.create({
-      name: name,
-      email: email,
-      password: hash,
-    });
-    res.status(201).json(result);
+    const hash = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({ name, email, password: hash });
+    res.status(201).json(newUser);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: "An error occurred during sign up" });
   }
 };
 
+function generateAccessToken(id, name) {
+  return jwt.sign({ userId: id, name }, process.env.JWT_ACCESS_TOKEN);
+}
+
 exports.logIn = async (req, res) => {
   try {
-    const email = req.body.email;
-    const password = req.body.password;
-    const findEmail = await User.findOne({ where: { email: email } });
-    if (!findEmail) {
-      return res.status(404).json({ message: "User not found" });
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-    const comparePass = await bcrypt.compare(password, findEmail.password);
+
+    const comparePass = await bcrypt.compare(password, user.password);
+
     if (!comparePass) {
-      return res.status(401).json({ message: "User not authorized" });
+      return res.status(401).json({ success: false, message: "User not authorized" });
     }
-    res.status(200).json(findEmail);
+
+    const token = generateAccessToken(user.id, user.name);
+    res.status(200).json({ success: true, message: "User login successful", token });
   } catch (error) {
-    res.status(500).json({ message: "User login successful" });
+    console.error(error);
+    res.status(500).json({ success: false, message: "An error occurred during login" });
   }
 };
