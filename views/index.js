@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         editBtn.addEventListener("click", () => {
           axios
             .delete(
-              `http://localhost/expense/delete-expense/${editBtn.parentElement.id}`
+              `http://localhost:3000/expense/delete-expense/${editBtn.parentElement.id}`
             )
             .then((res) => {
               document.getElementById("amount").value = amount;
