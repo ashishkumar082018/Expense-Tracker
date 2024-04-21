@@ -11,7 +11,15 @@ form.addEventListener("submit", (e) => {
   axios
     .post("http://localhost:3000/user/signup", signup)
     .then((result) => {
-      window.location.href = index.html;
+      window.location.href = "../public/index.html";
     })
-    .catch((err) => console.log(err));
-});
+    .catch((error) => {
+      if (error.response) {
+        const errorMessage = error.response.data.message;
+        alert(errorMessage);
+      } else {
+        alert("An error occurred. Please try again later.");
+      }
+    });
+})
+
