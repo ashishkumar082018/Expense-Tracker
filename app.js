@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const path = require("path");
 require('dotenv').config();
 
 const passwordRoute = require("./routes/password");
@@ -13,10 +14,15 @@ const premiumRoute = require("./routes/premium");
 const User = require('./models/user');
 const Expense = require('./models/expense');
 const Order = require("./models/order");
+const ForgotPasswordRequests = require("./models/forgotPassword");
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use("/expense", expenseRoute);
 app.use("/user", userRoute);
 app.use('/purchase', purchaseRoute);
@@ -28,6 +34,9 @@ Expense.belongsTo(User);
 
 Order.belongsTo(User);
 User.hasMany(Order);
+
+User.hasMany(ForgotPasswordRequests);
+ForgotPasswordRequests.belongsTo(User);
 
 sequelize
   .sync(
