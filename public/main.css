@@ -1,11 +1,11 @@
-#premium {
-    position: absolute;
-    right: 0px;
-    top: 0px;
-    margin: 15px;
-    text-align: right;
-}
-
 .modal {
     color: black;
+}
+
+#forget {
+    color: white;
+}
+
+#forget:hover {
+    color: #ffc107;
 }

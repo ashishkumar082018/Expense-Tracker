@@ -1,4 +1,5 @@
-const form = document.querySelector("form");
+const form = document.querySelector(".form");
+const forgetForm = document.querySelector(".forget-form");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -24,6 +25,19 @@ form.addEventListener("submit", async (e) => {
       }
     });
 })
+
+forgetForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = e.target.email.value;
+  try {
+    const result = await axios.post("http://localhost:3000/password/forgotpassword", { email: email });
+    console.log(result.data);
+    alert(result.data);
+  } catch (err) {
+    console.error(err);
+    alert("An error occurred while sending the email. Please try again later.");
+  }
+});
 
 const signup = document.getElementById("signup");
 signup.addEventListener("click", () => {

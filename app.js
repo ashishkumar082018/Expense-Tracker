@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 require('dotenv').config();
 
+const passwordRoute = require("./routes/password");
 const sequelize = require("./util/database");
 const expenseRoute = require("./routes/expense");
 const userRoute = require("./routes/user");
@@ -20,6 +21,7 @@ app.use("/expense", expenseRoute);
 app.use("/user", userRoute);
 app.use('/purchase', purchaseRoute);
 app.use('/premium', premiumRoute);
+app.use('/password', passwordRoute);
 
 User.hasMany(Expense);
 Expense.belongsTo(User);
