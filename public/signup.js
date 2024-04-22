@@ -11,7 +11,7 @@ form.addEventListener("submit", (e) => {
   axios
     .post("http://localhost:3000/user/signup", signup)
     .then((result) => {
-      window.location.href = "../public/index.html";
+      window.location.href = "../public/login.html";
     })
     .catch((error) => {
       if (error.response) {

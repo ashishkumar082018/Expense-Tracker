@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(result => {
                         result.data.forEach(user => {
                             const li = document.createElement("li");
-                            li.innerText = `${user.name} - ${user.Total_Expenses}`;
+                            li.innerText = `NAME - ${user.name}   ||   Total Expense - ${user.totalexpense}`;
                             leaderboardItem.appendChild(li);
                         });
                     })
