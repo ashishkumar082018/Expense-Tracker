@@ -2,11 +2,9 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sequelize = require("../util/database");
-
 function generateAccessToken(id, name) {
     return jwt.sign({ id: id, name: name }, process.env.JWT_ACCESS_TOKEN);
 }
-
 exports.signUp = async (req, res) => {
     const t = await sequelize.transaction();
     try {
@@ -15,21 +13,20 @@ exports.signUp = async (req, res) => {
         const password = req.body.password;
         const saltRounds = 10;
         const hash = await bcrypt.hash(password, saltRounds);
-        const result = await User.create({
+        await User.create({
             name: name,
             email: email,
             password: hash,
-            transaction : t
+            transaction: t
         })
         await t.commit();
-        res.status(201).json(result);
+        res.status(201).json({ message: 'User is created successfully' });
     }
     catch (error) {
         await t.rollback();
         res.status(500).json(error);
     }
 }
-
 exports.logIn = async (req, res) => {
     try {
         const email = req.body.email;
@@ -42,7 +39,7 @@ exports.logIn = async (req, res) => {
         if (!comparePass) {
             return res.status(401).json({ message: 'User not authorized' });
         }
-        res.status(200).json({ message: 'User login successful', token: generateAccessToken(user.id, user.name) });
+        res.status(200).json({ message: 'User login successful', token: generateAccessToken(user.id, user.name, user.ispremiumuser) });
     }
     catch (error) {
         res.status(500).json({ message: 'Internal Server Error' });
