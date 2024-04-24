@@ -1,8 +1,14 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const fs = require("fs");
 const path = require("path");
+const helmet = require('helmet');
+const compression = require("compression");
+const morgan = require("morgan");
 require('dotenv').config();
+
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
 
 const passwordRoute = require("./routes/password");
 const sequelize = require("./util/database");
@@ -18,6 +24,9 @@ const Order = require("./models/order");
 const ForgotPasswordRequests = require("./models/forgotPassword");
 
 const app = express();
+app.use(helmet());
+app.use(compression());
+app.use(morgan("combined", { stream: accessLogStream }));
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -29,6 +38,10 @@ app.use("/user", userRoute);
 app.use('/purchase', purchaseRoute);
 app.use('/premium', premiumRoute);
 app.use('/password', passwordRoute);
+
+app.use((req, res, next) => {
+  res.status(200).sendFile(path.join(__dirname, `public/${req.url}`));
+});
 
 User.hasMany(Expense);
 Expense.belongsTo(User);
@@ -47,7 +60,7 @@ sequelize
   //  {force : true}
   )
   .then(() => {
-    app.listen(3000, () => {
+    app.listen(process.env.PORT || 3000, () => {
       console.log("Server running on port 3000");
     });
   })

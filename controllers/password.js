@@ -18,7 +18,7 @@ exports.sendForgotPassword = async (req, res) => {
         const htmlContent = `<a href="http://localhost:3000/password/forgotpassword/${id}">Link to Reset Password</a>`;
         const transporter = createTransport({
             host: process.env.BREVO_HOST,
-            port: process.env.PORT,
+            port: process.env.BREVO_PORT,
             auth: {
                 user: process.env.BREVO_USER,
                 pass: process.env.BREVO_SMTP_KEY

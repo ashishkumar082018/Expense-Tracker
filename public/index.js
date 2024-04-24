@@ -25,7 +25,7 @@ async function handleAddExpense(e) {
       };
     }
     await axios.post(
-      "http://localhost:3000/expense/add-expense",
+      "http://3.111.245.115:3000/expense/add-expense",
       expenseDetails,
       { headers: { Authorization: token } }
     );
@@ -38,7 +38,7 @@ async function handleDeleteExpense(btn) {
   try {
     btn.addEventListener("click", async () => {
       await axios.delete(
-        `http://localhost:3000/expense/delete-expense/${btn.parentElement.parentElement.id}`,
+        `http://3.111.245.115:3000/expense/delete-expense/${btn.parentElement.parentElement.id}`,
         { headers: { Authorization: token } }
       );
       window.location.reload();
@@ -51,7 +51,7 @@ async function handleEditExpense(btn, expense, income, description, category) {
   try {
     btn.addEventListener("click", async () => {
       await axios.delete(
-        `http://localhost:3000/expense/delete-expense/${btn.parentElement.parentElement.id}`,
+        `http://3.111.245.115:3000/expense/delete-expense/${btn.parentElement.parentElement.id}`,
         { headers: { Authorization: token } }
       );
       if (expense >= income) {
@@ -73,7 +73,7 @@ async function handleGetExpense(page) {
   const paginationItems = document.querySelectorAll(".pagination .page-item a");
   try {
     const getExpense = await axios.get(
-      `http://localhost:3000/expense/getExpensePerPage?page=${page}&items_per_page=${itemsPerPage}`,
+      `http://3.111.245.115:3000/expense/getExpensePerPage?page=${page}&items_per_page=${itemsPerPage}`,
       { headers: { Authorization: token } }
     );
     const premium = getExpense.data.premium;
@@ -133,7 +133,7 @@ async function handleGetExpense(page) {
 /* Premium Feature Functions */
 async function buyPremium() {
   const response = await axios.get(
-    "http://localhost:3000/purchase/premiummembership",
+    "http://3.111.245.115:3000/purchase/premiummembership",
     { headers: { Authorization: token } }
   );
   var options = {
@@ -141,7 +141,7 @@ async function buyPremium() {
     order_id: response.data.order.id,
     handler: async function (response) {
       await axios.post(
-        "http://localhost:3000/purchase/updatetransactionstatus",
+        "http://3.111.245.115:3000/purchase/updatetransactionstatus",
         {
           order_id: options.order_id,
           payment_id: response.razorpay_payment_id,
@@ -156,7 +156,7 @@ async function buyPremium() {
   rzp1.open();
   rzp1.on("payment.failed", async function (response) {
     await axios.post(
-      "http://localhost:3000/purchase/failedtransactionstatus",
+      "http://3.111.245.115:3000/purchase/failedtransactionstatus",
       {
         order_id: options.order_id,
         payment_id: response.razorpay_payment_id,
@@ -183,7 +183,7 @@ async function premiumLeaderboard() {
     const leaderboardItem = document.getElementById("leaderboard-items");
     resetLeaderboard(leaderboardItem);
     const getLeaderboard = await axios.get(
-      "http://localhost:3000/premium/leaderboard",
+      "http://3.111.245.115:3000/premium/leaderboard",
       { headers: { Authorization: token } }
     );
     getLeaderboard.data.forEach((user) => {
@@ -201,7 +201,7 @@ async function premiumGenerateReport() {
     const yearlyExpense = document.getElementById("yearly-expense");
     const currentYear = document.getElementById("current-year");
     const currentMonth = document.getElementById("current-month");
-    const getReport = await axios.get("http://localhost:3000/premium/report", {
+    const getReport = await axios.get("http://3.111.245.115:3000/premium/report", {
       headers: { Authorization: token },
     });
     const monthly = getReport.data.monthly;
@@ -261,7 +261,7 @@ async function premiumGenerateReport() {
 async function premiumDownloadReport() {
   try {
     axios
-      .get("http://localhost:3000/premium/download-report", {
+      .get("http://3.111.245.115:3000/premium/download-report", {
         headers: { Authorization: token },
       })
       .then((result) => {
@@ -278,7 +278,7 @@ async function premiumDownloadReport() {
 async function premiumShowAllReports() {
   try {
     const allReports = document.getElementById("all-reports");
-    const getReport = await axios.get("http://localhost:3000/premium/report", {
+    const getReport = await axios.get("http://3.111.245.115:3000/premium/report", {
       headers: { Authorization: token },
     });
     const reports = getReport.data.reports;

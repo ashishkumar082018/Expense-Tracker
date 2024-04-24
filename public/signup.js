@@ -9,7 +9,7 @@ form.addEventListener("submit", (e) => {
   };
 
   axios
-    .post("http://localhost:3000/user/signup", signup)
+    .post("http://3.111.245.115:3000/user/signup", signup)
     .then((result) => {
       window.location.href = "../public/login.html";
     })
