@@ -31,18 +31,45 @@ exports.addExpense = async (req, res) => {
   } catch (err) {
     console.error(err);
     await t.rollback();
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
-exports.getExpense = async (req, res) => {
+
+exports.getExpensePerPage = async (req, res) => {
   try {
+    const ITEMS_PER_PAGE = parseInt(req.query.items_per_page);
+    const page = req.query.page || 1;
+    const offset = (page - 1) * ITEMS_PER_PAGE;
+    const limit = ITEMS_PER_PAGE;
     const id = req.user.id;
     const premium = req.user.ispremiumuser;
-    const expenses = await Expense.findAll({ where: { userId: id } });
-    res.json({ expenses: expenses, premium: premium });
+    const p1 = Expense.findAll({ where: { userId: id } });
+    const p2 = Expense.findAll({
+      where: { userId: id },
+      offset: offset,
+      limit: limit,
+    });
+    const [totalExpenses, expenses] = await Promise.all([p1, p2]);
+    const hasNextPage = ITEMS_PER_PAGE * page < expenses.length;
+    const hasPreviousPage = page > 1;
+    const nextPage = hasNextPage ? page + 1 : null;
+    const previousPage = hasPreviousPage ? page - 1 : null;
+    const totalPages = Math.ceil(totalExpenses.length / ITEMS_PER_PAGE);
+    const pagesDetail = {
+      hasNextPage,
+      hasPreviousPage,
+      nextPage,
+      previousPage,
+      totalPages,
+    };
+    res.json({
+      expenses: expenses,
+      premium: premium,
+      pagesDetail: pagesDetail,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 exports.deleteExpense = async (req, res) => {
@@ -74,6 +101,6 @@ exports.deleteExpense = async (req, res) => {
   } catch (err) {
     console.error(err);
     await t.rollback();
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
