@@ -1,6 +1,7 @@
 const Expense = require("../models/expense");
 const User = require("../models/user");
-const sequelize = require("../util/database");
+const sequelize = require("../utils/database");
+
 exports.addExpense = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -9,15 +10,11 @@ exports.addExpense = async (req, res) => {
     const description = req.body.description;
     const category = req.body.category;
     const id = req.user.id;
+    
+    //updating user table every time when he adds something as income or expense 
     await User.update(
-      {
-        totalexpense: sequelize.literal(
-          `totalexpense - ${expense} + ${income}`
-        ),
-      },
-      { where: { id: id } },
-      { transaction: t }
-    );
+      { totalexpense: sequelize.literal( `totalexpense - ${expense} + ${income}`), },
+      { where: { id: id } }, { transaction: t } );
     const result = await Expense.create({
       expense: expense,
       income: income,
@@ -72,6 +69,7 @@ exports.getExpensePerPage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 exports.deleteExpense = async (req, res) => {
   const t = await sequelize.transaction();
   const id = req.params.id;
@@ -87,11 +85,7 @@ exports.deleteExpense = async (req, res) => {
   const incomeAmount = expense.income;
   try {
     await User.update(
-      {
-        totalexpense: sequelize.literal(
-          `totalexpense - ${incomeAmount} + ${expenseAmount}`
-        ),
-      },
+      { totalexpense: sequelize.literal( `totalexpense - ${incomeAmount} + ${expenseAmount}`), },
       { where: { id: userId } },
       { transaction: t }
     );

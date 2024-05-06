@@ -12,7 +12,7 @@ const authenticate = async (req, res, next) => {
         if (!user) {
             return res.status(401).json({ message: "Invalid token" });
         }
-        req.user = user;
+        req.user = user; //IMPORTANT
         next();
     } catch (error) {
         return res.status(401).json({ message: "Authentication failed", error: error.message });

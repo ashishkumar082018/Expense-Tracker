@@ -9,9 +9,9 @@ form.addEventListener("submit", (e) => {
   };
 
   axios
-    .post("http://3.111.245.115:3000/user/signup", signup)
+    .post("https://expensetracker.ashishkumar.store/user/signup", signup)
     .then((result) => {
-      window.location.href = "../public/login.html";
+      window.location.href = "login.html";
     })
     .catch((error) => {
       if (error.response) {
@@ -22,4 +22,3 @@ form.addEventListener("submit", (e) => {
       }
     });
 })
-
