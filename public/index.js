@@ -102,7 +102,7 @@ async function handleGetExpense(page) {
                 <button type="button" class="btn btn-danger delete-btn">Delete</button>
                 `;
       const tr = document.createElement("tr");
-      tr.id = res.id;
+      tr.id = res._id;
       const td1 = document.createElement("td");
       const td2 = document.createElement("td");
       const td3 = document.createElement("td");
@@ -130,20 +130,23 @@ async function handleGetExpense(page) {
     alert(err.response.data.error + "\nFacing problem in fetching expense");
   }
 }
+
 /* Premium Feature Functions */
 async function buyPremium() {
+  try{
   const response = await axios.get(
     "https://expensetracker.ashishkumar.store/purchase/premiummembership",
     { headers: { Authorization: token } }
   );
   var options = {
-    key: response.data.key_id,
-    order_id: response.data.order.id,
+    "key": response.data.key_id,
+    "_id": response.data.order._id,
+    "orderId": response.data.order.orderId,
     handler: async function (response) {
       await axios.post(
         "https://expensetracker.ashishkumar.store/purchase/updatetransactionstatus",
         {
-          order_id: options.order_id,
+          _id: options._id,
           payment_id: response.razorpay_payment_id,
         },
         { headers: { Authorization: token } }
@@ -152,19 +155,25 @@ async function buyPremium() {
       window.location.reload();
     },
   };
+
   var rzp1 = new Razorpay(options);
   rzp1.open();
   rzp1.on("payment.failed", async function (response) {
     await axios.post(
       "https://expensetracker.ashishkumar.store/purchase/failedtransactionstatus",
       {
-        order_id: options.order_id,
+        _id: options._id,
         payment_id: response.razorpay_payment_id,
       },
       { headers: { Authorization: token } }
     );
     alert(response.error.description);
   });
+}catch(error){
+  console.error("Error in buyPremium:", error);
+}
+
+
 }
 async function premiumFeatures() {
   try {
@@ -188,7 +197,7 @@ async function premiumLeaderboard() {
     );
     getLeaderboard.data.forEach((user) => {
       const li = document.createElement("li");
-      li.innerText = `${user.name} - ${user.totalexpense}`;
+      li.innerText = `${user.name} - ${user.totalExpense}`;
       leaderboardItem.appendChild(li);
     });
   } catch (err) {
@@ -201,12 +210,9 @@ async function premiumGenerateReport() {
     const yearlyExpense = document.getElementById("yearly-expense");
     const currentYear = document.getElementById("current-year");
     const currentMonth = document.getElementById("current-month");
-    const getReport = await axios.get(
-      "https://expensetracker.ashishkumar.store/premium/report",
-      {
-        headers: { Authorization: token },
-      }
-    );
+    const getReport = await axios.get("https://expensetracker.ashishkumar.store/premium/report", {
+      headers: { Authorization: token },
+    });
     const monthly = getReport.data.monthly;
     const yearly = getReport.data.yearly;
     if (getReport.data.currentYear)
@@ -234,8 +240,8 @@ async function premiumGenerateReport() {
       const td2 = document.createElement("td");
       const td3 = document.createElement("td");
       td1.innerText = result.date;
-      td2.innerText = result.expense;
-      td3.innerText = result.income;
+      td2.innerText = result.income;
+      td3.innerText = result.expense;
       tr.appendChild(td1);
       tr.appendChild(td2);
       tr.appendChild(td3);
@@ -281,9 +287,9 @@ async function premiumDownloadReport() {
 async function premiumShowAllReports() {
   try {
     const allReports = document.getElementById("all-reports");
-    const getReport = await axios.get("https://expensetracker.ashishkumar.store/premium/report",
-      { headers: { Authorization: token }, }
-    );
+    const getReport = await axios.get("https://expensetracker.ashishkumar.store/premium/report", {
+      headers: { Authorization: token },
+    });
     const reports = getReport.data.reports;
     allReports.innerHTML = `
         <tr>

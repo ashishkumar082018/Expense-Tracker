@@ -1,33 +1,37 @@
 const Expense = require("../models/expense");
 const User = require("../models/user");
-const sequelize = require("../utils/database");
 
 exports.addExpense = async (req, res) => {
-  const t = await sequelize.transaction();
+
   try {
     const expense = req.body.expense || 0;
     const income = req.body.income || 0;
     const description = req.body.description;
     const category = req.body.category;
-    const id = req.user.id;
-    
-    //updating user table every time when he adds something as income or expense 
-    await User.update(
-      { totalexpense: sequelize.literal( `totalexpense - ${expense} + ${income}`), },
-      { where: { id: id } }, { transaction: t } );
+    const _id = req.user._id;
+
+    //updating user table every time when he adds something as income or expense
     const result = await Expense.create({
       expense: expense,
       income: income,
       description: description,
       category: category,
-      userId: id,
-      transaction: t,
     });
-    await t.commit();
+    await User.updateOne(
+      { _id: _id },
+      {
+        $inc: {
+          totalExpense: -expense + income,
+        },
+        $push: {
+          expenses: result._id,
+        },
+      }
+    );
+
     res.json(result);
   } catch (err) {
     console.error(err);
-    await t.rollback();
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -38,15 +42,12 @@ exports.getExpensePerPage = async (req, res) => {
     const page = req.query.page || 1;
     const offset = (page - 1) * ITEMS_PER_PAGE;
     const limit = ITEMS_PER_PAGE;
-    const id = req.user.id;
-    const premium = req.user.ispremiumuser;
-    const p1 = Expense.findAll({ where: { userId: id } });
-    const p2 = Expense.findAll({
-      where: { userId: id },
-      offset: offset,
-      limit: limit,
-    });
-    const [totalExpenses, expenses] = await Promise.all([p1, p2]);
+    const premium = req.user.isPremiumUser;
+    const p1 = await req.user.populate("expenses");
+    const totalExpenses = p1.expenses;
+    const expenses = await Expense.find({ _id: { $in: totalExpenses } })
+      .skip(offset)
+      .limit(limit);
     const hasNextPage = ITEMS_PER_PAGE * page < expenses.length;
     const hasPreviousPage = page > 1;
     const nextPage = hasNextPage ? page + 1 : null;
@@ -71,30 +72,30 @@ exports.getExpensePerPage = async (req, res) => {
 };
 
 exports.deleteExpense = async (req, res) => {
-  const t = await sequelize.transaction();
-  const id = req.params.id;
-  const userId = req.user.id;
-  const expense = await Expense.findOne(
-    { where: { id: id, userId: userId } },
-    { transaction: t }
-  );
+  const _id = req.params._id;
+  const userId = req.user._id;
+  const expense = await Expense.findOne({ _id: _id });
   if (!expense) {
     return res.status(404).json({ message: "Expense not found" });
   }
   const expenseAmount = expense.expense;
   const incomeAmount = expense.income;
   try {
-    await User.update(
-      { totalexpense: sequelize.literal( `totalexpense - ${incomeAmount} + ${expenseAmount}`), },
-      { where: { id: userId } },
-      { transaction: t }
+    await User.updateOne(
+      { _id: userId },
+      {
+        $inc: {
+          totalExpense: -incomeAmount + expenseAmount,
+        },
+        $pull: {
+          expenses: _id,
+        },
+      }
     );
-    await t.commit();
-    await expense.destroy();
+    await expense.deleteOne();
     res.json({ message: "Expense deleted successfully" });
   } catch (err) {
     console.error(err);
-    await t.rollback();
     res.status(500).json({ error: "Internal server error" });
   }
 };

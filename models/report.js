@@ -1,12 +1,15 @@
-const Sequelize = require("sequelize");
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const sequelize = require("../utils/database");
-
-const Report = sequelize.define('report', {
+const reportSchema = new Schema({
     url: {
-        type: Sequelize.STRING,
-        allowNull: false
+        type: String,
+        required: true
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
 })
 
-module.exports = Report;
+module.exports = mongoose.model("Report", reportSchema);
