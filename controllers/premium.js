@@ -3,18 +3,18 @@ const User = require("../models/user");
 const Expense = require("../models/expense");
 const Report = require("../models/report");
 
-// function to generate leaderboard---- 
+// Function to generate leaderboard
 exports.getLeaderboard = async (req, res) => {
   const premium = req.user.isPremiumUser;
   try {
     if (!premium) {
-      return res.status(401).json({ error:"You are not a premium user. Access to the leaderboard is restricted.", });
+      return res.status(401).json({ error: "You are not a premium user. Access to the leaderboard is restricted." });
     }
 
-    // getting all users for learderboard --- 
     const leaderboard = await User.find({ totalExpense: { $gt: 0 } }, 'name totalExpense')
-    .sort({ totalExpense: -1 })
-    .limit(10);
+      .sort({ totalExpense: -1 })
+      .limit(10);
+
     res.status(200).json(leaderboard);
   } catch (err) {
     console.error("Error fetching leaderboard:", err);
@@ -22,80 +22,85 @@ exports.getLeaderboard = async (req, res) => {
   }
 };
 
-
-
-// function to generate report ---- 
+// Function to generate report
 exports.generateReport = async (req, res) => {
   const premium = req.user.isPremiumUser;
   try {
-    if (!premium) { return res.status(401).json({ error: "You are not a premium user. Access to the report generation is restricted.", });
+    if (!premium) {
+      return res.status(401).json({ error: "You are not a premium user. Access to the report generation is restricted." });
     }
+
     const _id = req.user._id;
-    const month = [ "January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December",
-    ];
+    const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const currentYear = new Date().getFullYear();
     const currentMonth = month[new Date().getMonth()];
 
     await req.user.populate({ path: 'expenseReport' });
     await req.user.populate({ path: 'expenses' });
-    const p1 = req.user.expenses.reduce((acc, expense) => {
-        const expenseMonth = month[expense.updatedAt.getMonth()];
-        const expenseDate = expense.updatedAt.getDate();
-        if (expenseMonth === currentMonth) {
-            const key = `${expenseMonth}-${expenseDate}`;
-            if (!acc[key]) {
-                acc[key] = {
-                    date: expenseDate,
-                    income: 0,
-                    expense: 0
-                };
-            }
-            acc[key].income += expense.income;
-            acc[key].expense += expense.expense;
-        }
 
-        return acc;
-    },{});
-    const p2 = req.user.expenses.reduce((acc, expense) => {
-        const expenseYear = expense.updatedAt.getFullYear();
-        const expenseMonth = expense.updatedAt.getMonth();
-        if (expenseYear === currentYear) {
-            const key = `${expenseYear}-${expenseMonth}`;
-            if (!acc[key]) {
-                acc[key] = {
-                    month: expenseMonth,
-                    income: 0,
-                    expense: 0
-                };
-            }
-            acc[key].income += expense.income;
-            acc[key].expense += expense.expense;
+    const p1 = req.user.expenses.reduce((acc, expense) => {
+      const expenseMonth = month[expense.updatedAt.getMonth()];
+      const expenseDate = expense.updatedAt.getDate();
+      if (expenseMonth === currentMonth) {
+        const key = `${expenseMonth}-${expenseDate}`;
+        if (!acc[key]) {
+          acc[key] = {
+            date: expenseDate,
+            income: 0,
+            expense: 0
+          };
         }
-        return acc;
-    },{});
+        acc[key].income += expense.income;
+        acc[key].expense += expense.expense;
+      }
+      return acc;
+    }, {});
+
+    const p2 = req.user.expenses.reduce((acc, expense) => {
+      const expenseYear = expense.updatedAt.getFullYear();
+      const expenseMonth = expense.updatedAt.getMonth();
+      if (expenseYear === currentYear) {
+        const key = `${expenseYear}-${expenseMonth}`;
+        if (!acc[key]) {
+          acc[key] = {
+            month: expenseMonth,
+            income: 0,
+            expense: 0
+          };
+        }
+        acc[key].income += expense.income;
+        acc[key].expense += expense.expense;
+      }
+      return acc;
+    }, {});
+
     const p3 = req.user.expenseReport
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-        .slice(0,20);
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, 20);
+
     const [expensesMonthly, expensesYearly, allReports] = await Promise.all([p1, p2, p3]);
+
     let yearly = [];
     let monthly = [];
     let reports = {};
+
     for (const [key, value] of Object.entries(expensesMonthly)) {
-        monthly.push({
-            date: value.date,
-            expense: value.expense,
-            income: value.income
-        });
+      monthly.push({
+        date: value.date,
+        expense: value.expense,
+        income: value.income
+      });
     }
+
     for (const [key, value] of Object.entries(expensesYearly)) {
-        yearly.push({
-            month: month[value.month-1],
-            expense: value.expense,
-            income: value.income,
-            savings: value.income - value.expense
-        });
+      yearly.push({
+        month: month[value.month],
+        expense: value.expense,
+        income: value.income,
+        savings: value.income - value.expense
+      });
     }
-        
+
     allReports.forEach((result, index) => {
       const updatedAt = new Date(result.updatedAt);
       const date = updatedAt.toLocaleString("en-IN", {
@@ -120,8 +125,13 @@ exports.generateReport = async (req, res) => {
   }
 };
 
-// initializing a S3 backet by giving access key and secret key
+// Initializing a S3 bucket by giving access key and secret key
 function uploadToS3(data, fileName) {
+  // Logging environment variables for debugging
+  console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID);
+  console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY);
+  console.log('AWS_BUCKET_NAME:', process.env.AWS_BUCKET_NAME);
+
   const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -143,36 +153,31 @@ function uploadToS3(data, fileName) {
   });
 }
 
-// function to download report
-exports.downloadReport = async (req, res, next) => {
+// Function to download report
+exports.downloadReport = async (req, res) => {
   const premium = req.user.isPremiumUser;
   try {
     if (!premium) {
-      return res
-        .status(401)
-        .json({
-          error:
-            "You are not a premium user. Access to the report generation is restricted.",
-        });
+      return res.status(401).json({ error: "You are not a premium user. Access to the report generation is restricted." });
     }
+
     const expenses = await req.user.populate({
       path: 'expenses',
       select: 'expense income description category updatedAt -_id'
-  });
-    // Expense is in form of an array so converting it into a string
+    });
+
     const stringifiedExpenses = JSON.stringify(expenses.expenses);
 
-    // Defining file name
-    const fileName = `ExpenseReports/${req.user._id}/${new Date()}.txt`;
+    const fileName = `ExpenseReports/${req.user._id}/${new Date().toISOString()}.txt`;
 
-    // uploading file(report) to S3
     const fileUrl = await uploadToS3(stringifiedExpenses, fileName);
+
     const report = await Report.create({ url: fileUrl, userId: req.user._id });
-    await req.user.updateOne({$push: {expenseReport:report._id}});
+    await req.user.updateOne({ $push: { expenseReport: report._id } });
+
     res.status(200).json({ fileUrl });
   } catch (err) {
     console.error("Error downloading report:", err);
-    await t.rollback();
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

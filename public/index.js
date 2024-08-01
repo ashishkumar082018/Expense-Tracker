@@ -25,7 +25,7 @@ async function handleAddExpense(e) {
       };
     }
     await axios.post(
-      "https://expensetracker.ashishkumar.store/expense/add-expense",
+      "https://expense-tracker-livid-tau.vercel.app/expense/add-expense",
       expenseDetails,
       { headers: { Authorization: token } }
     );
@@ -38,7 +38,7 @@ async function handleDeleteExpense(btn) {
   try {
     btn.addEventListener("click", async () => {
       await axios.delete(
-        `https://expensetracker.ashishkumar.store/expense/delete-expense/${btn.parentElement.parentElement.id}`,
+        `https://expense-tracker-livid-tau.vercel.app/expense/delete-expense/${btn.parentElement.parentElement.id}`,
         { headers: { Authorization: token } }
       );
       window.location.reload();
@@ -51,7 +51,7 @@ async function handleEditExpense(btn, expense, income, description, category) {
   try {
     btn.addEventListener("click", async () => {
       await axios.delete(
-        `https://expensetracker.ashishkumar.store/expense/delete-expense/${btn.parentElement.parentElement.id}`,
+        `https://expense-tracker-livid-tau.vercel.app/expense/delete-expense/${btn.parentElement.parentElement.id}`,
         { headers: { Authorization: token } }
       );
       if (expense >= income) {
@@ -73,7 +73,7 @@ async function handleGetExpense(page) {
   const paginationItems = document.querySelectorAll(".pagination .page-item a");
   try {
     const getExpense = await axios.get(
-      `https://expensetracker.ashishkumar.store/expense/getExpensePerPage?page=${page}&items_per_page=${itemsPerPage}`,
+      `https://expense-tracker-livid-tau.vercel.app/expense/getExpensePerPage?page=${page}&items_per_page=${itemsPerPage}`,
       { headers: { Authorization: token } }
     );
     const premium = getExpense.data.premium;
@@ -133,47 +133,45 @@ async function handleGetExpense(page) {
 
 /* Premium Feature Functions */
 async function buyPremium() {
-  try{
-  const response = await axios.get(
-    "https://expensetracker.ashishkumar.store/purchase/premiummembership",
-    { headers: { Authorization: token } }
-  );
-  var options = {
-    "key": response.data.key_id,
-    "_id": response.data.order._id,
-    "orderId": response.data.order.orderId,
-    handler: async function (response) {
+  try {
+    const response = await axios.get(
+      "https://expense-tracker-livid-tau.vercel.app/purchase/premiummembership",
+      { headers: { Authorization: token } }
+    );
+    var options = {
+      key: response.data.key_id,
+      _id: response.data.order._id,
+      orderId: response.data.order.orderId,
+      handler: async function (response) {
+        await axios.post(
+          "https://expense-tracker-livid-tau.vercel.app/purchase/updatetransactionstatus",
+          {
+            _id: options._id,
+            payment_id: response.razorpay_payment_id,
+          },
+          { headers: { Authorization: token } }
+        );
+        alert("You are a Premium User Now");
+        window.location.reload();
+      },
+    };
+
+    var rzp1 = new Razorpay(options);
+    rzp1.open();
+    rzp1.on("payment.failed", async function (response) {
       await axios.post(
-        "https://expensetracker.ashishkumar.store/purchase/updatetransactionstatus",
+        "https://expense-tracker-livid-tau.vercel.app/purchase/failedtransactionstatus",
         {
           _id: options._id,
           payment_id: response.razorpay_payment_id,
         },
         { headers: { Authorization: token } }
       );
-      alert("You are a Premium User Now");
-      window.location.reload();
-    },
-  };
-
-  var rzp1 = new Razorpay(options);
-  rzp1.open();
-  rzp1.on("payment.failed", async function (response) {
-    await axios.post(
-      "https://expensetracker.ashishkumar.store/purchase/failedtransactionstatus",
-      {
-        _id: options._id,
-        payment_id: response.razorpay_payment_id,
-      },
-      { headers: { Authorization: token } }
-    );
-    alert(response.error.description);
-  });
-}catch(error){
-  console.error("Error in buyPremium:", error);
-}
-
-
+      alert(response.error.description);
+    });
+  } catch (error) {
+    console.error("Error in buyPremium:", error);
+  }
 }
 async function premiumFeatures() {
   try {
@@ -192,7 +190,7 @@ async function premiumLeaderboard() {
     const leaderboardItem = document.getElementById("leaderboard-items");
     resetLeaderboard(leaderboardItem);
     const getLeaderboard = await axios.get(
-      "https://expensetracker.ashishkumar.store/premium/leaderboard",
+      "https://expense-tracker-livid-tau.vercel.app/premium/leaderboard",
       { headers: { Authorization: token } }
     );
     getLeaderboard.data.forEach((user) => {
@@ -210,9 +208,12 @@ async function premiumGenerateReport() {
     const yearlyExpense = document.getElementById("yearly-expense");
     const currentYear = document.getElementById("current-year");
     const currentMonth = document.getElementById("current-month");
-    const getReport = await axios.get("https://expensetracker.ashishkumar.store/premium/report", {
-      headers: { Authorization: token },
-    });
+    const getReport = await axios.get(
+      "https://expense-tracker-livid-tau.vercel.app/premium/report",
+      {
+        headers: { Authorization: token },
+      }
+    );
     const monthly = getReport.data.monthly;
     const yearly = getReport.data.yearly;
     if (getReport.data.currentYear)
@@ -270,9 +271,12 @@ async function premiumGenerateReport() {
 async function premiumDownloadReport() {
   try {
     axios
-      .get("https://expensetracker.ashishkumar.store/premium/download-report", {
-        headers: { Authorization: token },
-      })
+      .get(
+        "https://expense-tracker-livid-tau.vercel.app/premium/download-report",
+        {
+          headers: { Authorization: token },
+        }
+      )
       .then((result) => {
         const a = document.createElement("a");
         a.href = result.data.fileUrl;
@@ -287,9 +291,12 @@ async function premiumDownloadReport() {
 async function premiumShowAllReports() {
   try {
     const allReports = document.getElementById("all-reports");
-    const getReport = await axios.get("https://expensetracker.ashishkumar.store/premium/report", {
-      headers: { Authorization: token },
-    });
+    const getReport = await axios.get(
+      "https://expense-tracker-livid-tau.vercel.app/premium/report",
+      {
+        headers: { Authorization: token },
+      }
+    );
     const reports = getReport.data.reports;
     allReports.innerHTML = `
         <tr>

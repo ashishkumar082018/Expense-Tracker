@@ -8,7 +8,7 @@ form.addEventListener("submit", (e) => {
     password: e.target.password.value,
   };
   axios
-    .post("https://expensetracker.ashishkumar.store/user/login", login)
+    .post("https://expense-tracker-livid-tau.vercel.app/user/login", login)
     .then((result) => {
       alert(result.data.message);
       localStorage.setItem("token", result.data.token);
@@ -21,7 +21,12 @@ forgetForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const email = e.target.email.value;
   axios
-    .post("https://expensetracker.ashishkumar.store/password/forgotpassword", { email: email })
+    .post(
+      "https://expense-tracker-livid-tau.vercel.app/password/forgotpassword",
+      {
+        email: email,
+      }
+    )
     .then((result) => {
       alert(result.data.message);
       window.location.reload();

@@ -8,14 +8,16 @@ const User = require("../models/user");
 
 exports.sendForgotPassword = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email  });
+    const user = await User.findOne({ email: req.body.email });
     if (!user) {
       const error = new Error("User not found");
       error.status = 404;
       throw error;
     }
+
     const forgetPasswordId = uuidv4();
-    const htmlContent = `<a href="https://expensetracker.ashishkumar.store/password/forgotpassword/${forgetPasswordId}">Link to Reset Password</a>`;
+    const htmlContent = `<a href="https://expense-tracker-livid-tau.vercel.app/password/forgotpassword/${forgetPasswordId}">Link to Reset Password</a>`;
+
     const transporter = createTransport({
       host: process.env.BREVO_HOST,
       port: 587,
@@ -24,16 +26,26 @@ exports.sendForgotPassword = async (req, res) => {
         pass: process.env.BREVO_SMTP_KEY,
       },
     });
+
     const mailOptions = {
       from: '"Ashish kumar" <ashishkumar@gmail.com>',
       to: req.body.email,
       subject: "Forgot Password",
-      text: htmlContent,
+      html: htmlContent, // Changed from text to html
     };
-    const forgetPassword = await ForgotPasswordRequests.create({ forgetPasswordId: forgetPasswordId, userId: user._id });
-    await user.updateOne({$push: {forgetPasswordRequest: forgetPassword._id}});
+
+    const forgetPassword = await ForgotPasswordRequests.create({
+      forgetPasswordId: forgetPasswordId,
+      userId: user._id,
+    });
+
+    await user.updateOne({
+      $push: { forgetPasswordRequest: forgetPassword._id },
+    });
+
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: "Email sent sucessfully" });
+
+    res.status(200).json({ message: "Email sent successfully" });
   } catch (err) {
     if (err.status === 404) {
       res.status(404).json({ error: err.message });
@@ -47,15 +59,18 @@ exports.sendForgotPassword = async (req, res) => {
 exports.getForgotPassword = async (req, res) => {
   try {
     const userRequest = await ForgotPasswordRequests.findOne({
-      forgetPasswordId: req.params.uuid });
+      forgetPasswordId: req.params.uuid,
+    });
+
     if (!userRequest) {
-      res.send("<h1>Password reset request not found</h1>");
+      return res.send("<h1>Password reset request not found</h1>");
     }
+
     if (!userRequest.isActive) {
-      res.send("<h1>Password reset request expired</h1>");
-    } else {
-      res.sendFile(path.join(__dirname, "../public/forgetPassword.html"));
+      return res.send("<h1>Password reset request expired</h1>");
     }
+
+    res.sendFile(path.join(__dirname, "../public/forgetPassword.html"));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -65,22 +80,36 @@ exports.getForgotPassword = async (req, res) => {
 exports.newPassword = async (req, res) => {
   try {
     const userRequest = await ForgotPasswordRequests.findOne({
-      forgetPasswordId: req.params.uuid });
+      forgetPasswordId: req.params.uuid,
+    });
+
     if (!userRequest) {
       throw new Error("Password reset request not found");
     }
+
+    if (!userRequest.isActive) {
+      return res.status(400).json({ error: "Password reset request expired" });
+    }
+
     const user = await User.findOne({ _id: userRequest.userId });
+
     if (!user) {
       throw new Error("User not found");
     }
+
+    if (!req.body.password) {
+      return res.status(400).json({ error: "New password is required" });
+    }
+
     const saltRounds = 10;
     const hash = await bcrypt.hash(req.body.password, saltRounds);
-    if (userRequest.isActive == true) {
-      user.password = hash;
-      await user.save();
-      userRequest.isActive = false;
-      await userRequest.save();
-    }
+
+    user.password = hash;
+    await user.save();
+
+    userRequest.isActive = false;
+    await userRequest.save();
+
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.error(error);

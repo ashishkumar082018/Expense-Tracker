@@ -9,7 +9,7 @@ form.addEventListener("submit", (e) => {
   };
 
   axios
-    .post("https://expensetracker.ashishkumar.store/user/signup", signup)
+    .post("https://expense-tracker-livid-tau.vercel.app/user/signup", signup)
     .then((result) => {
       window.location.href = "login.html";
     })
@@ -21,4 +21,9 @@ form.addEventListener("submit", (e) => {
         alert("An error occurred. Please try again later.");
       }
     });
-})
+});
+
+const login = document.getElementById("login");
+login.addEventListener("click", () => {
+  window.location.href = "login.html";
+});
