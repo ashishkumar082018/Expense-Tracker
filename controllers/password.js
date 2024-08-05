@@ -20,7 +20,7 @@ exports.sendForgotPassword = async (req, res) => {
     console.log("Generated forgetPasswordId:", forgetPasswordId);
 
     // Create the HTML content for the email
-    const resetLink = `https://expense-tracker-livid-tau.vercel.app/password/forgotpassword/${forgetPasswordId}`;
+    const resetLink = `https://expense-tracker-livid-tau.vercel.app//password/forgotpassword/${forgetPasswordId}`;
     const htmlContent = `<a href="${resetLink}">Link to Reset Password</a>`;
 
     // Configure the transporter for sending emails

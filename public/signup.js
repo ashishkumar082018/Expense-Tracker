@@ -9,7 +9,7 @@ form.addEventListener("submit", (e) => {
   };
 
   axios
-    .post("https://expense-tracker-livid-tau.vercel.app/user/signup", signup)
+    .post("https://expense-tracker-livid-tau.vercel.app//user/signup", signup)
     .then((result) => {
       window.location.href = "login.html";
     })

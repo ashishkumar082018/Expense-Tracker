@@ -14,6 +14,7 @@ const premiumRoute = require("./routes/premium");
 const passwordRoute = require("./routes/password");
 
 const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
 dotenv.config();
