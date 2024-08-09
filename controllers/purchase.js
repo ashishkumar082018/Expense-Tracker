@@ -21,12 +21,10 @@ exports.premiumMembership = async (req, res, next) => {
           return res.status(201).json({ order, key_id: rzp.key_id });
         })
         .catch((err) => {
-          t.rollback();
           throw new Error(err);
         });
     });
   } catch (error) {
-    t.rollback();
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
